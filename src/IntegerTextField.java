@@ -100,9 +100,35 @@ public class IntegerTextField extends TextField {
     /**
      * Gets the value of the property text as an int.
      * @return int: the value of the property text as an int
+     * @throws NumberFormatException if the value is greater than Integer.MAX_VALUE or less than Integer.MIN_VALUE
      */
-    public int getInt() {
-        return Integer.parseInt(this.getText());
+    public int getInt() throws NumberFormatException {
+        String value = this.getText();
+        if (value.length() == 0 || value.equals("-")) return 0;
+        if (value.compareTo(String.valueOf(Integer.MAX_VALUE)) > 0) {
+            throw new NumberFormatException("Value of IntegerTextField is greater than Integer.MAX_VALUE: " + value);
+        } else if (this.isNegative() && value.compareTo(String.valueOf(Integer.MIN_VALUE)) > 0) {
+            throw new NumberFormatException("Value of IntegerTextField is less than Integer.MIN_VALUE: " + value);
+        }
+        
+        return Integer.parseInt(value);
+    }
+    
+    /**
+     * Gets the value of the property text as a long.
+     * @return long: the value of the property text as a long
+     * @throws NumberFormatException if the value is greater than Long.MAX_VALUE or less than Long.MIN_VALUE
+     */
+    public long getLong() throws NumberFormatException {
+        String value = this.getText();
+        if (value.length() == 0 || value.equals("-")) return 0;
+        if (value.compareTo(String.valueOf(Long.MAX_VALUE)) > 0) {
+            throw new NumberFormatException("Value of IntegerTextField is greater than Integer.MAX_VALUE: " + value);
+        } else if (this.isNegative() && value.compareTo(String.valueOf(Long.MIN_VALUE)) > 0) {
+            throw new NumberFormatException("Value of IntegerTextField is less than Integer.MIN_VALUE: " + value);
+        }
+        
+        return Long.parseLong(value);
     }
     
     /**
