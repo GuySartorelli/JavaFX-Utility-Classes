@@ -80,7 +80,10 @@ public class IntegerTextField extends TextField {
     private void setupRegex() {
         String allowNegativesRegex = (this.allowsNegativeValues) ? "-?" : "";
         this.integerPattern = Pattern.compile(String.format("%s[0-9]*", allowNegativesRegex));
-        this.nonIntegerPattern = Pattern.compile(String.format("%s[^\\d]", allowNegativesRegex));
+
+        String removeHyphensNotStartOfString = (this.allowsNegativeValues) ? "(?<=.)-+|" : "";
+        allowNegativesRegex = (this.allowsNegativeValues) ? "\\-" : "";
+        this.nonIntegerPattern = Pattern.compile(String.format("%s[^%s0-9]+", removeHyphensNotStartOfString, allowNegativesRegex));
     }
     
     /**
@@ -91,7 +94,7 @@ public class IntegerTextField extends TextField {
      */
     public void setText(int input) throws IllegalArgumentException {
         if (!this.allowsNegativeValues && input < 0) throw new IllegalArgumentException("The IntegerTextField does not allow negative values");
-        setText(input);
+        setText(String.valueOf(input));
     }
     
     /**
