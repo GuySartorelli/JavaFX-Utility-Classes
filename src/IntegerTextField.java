@@ -12,7 +12,7 @@ import javafx.scene.control.TextFormatter.Change;
 /**
  * Text field that only accepts integer values as input.
  * Any text pasted into this text field will be stripped of any non-integer characters so that only the integers remain.
- * Input may be optionally restricted to a maximum number of characters and to allow or disallow negative values.
+ * Input may be optionally restricted to a maximum number of digits and to allow or disallow negative values.
  * @see javafx.scene.control.TextField
  * @author Guy Sartorelli
  *
@@ -21,7 +21,7 @@ public class IntegerTextField extends TextField {
     private Pattern integerPattern;
     private Pattern nonIntegerPattern;
     private boolean allowsNegativeValues = true;
-    private int maxChars = -1;
+    private int maxDigits = -1;
     
     /**
      * Creates a TextField with empty text content.
@@ -42,8 +42,8 @@ public class IntegerTextField extends TextField {
                         newLength = newValue.length();
                     }
                     if (isNegative()) newLength -= 1;
-                    if (maxChars > 0 && newLength > maxChars) {
-                        newValue = newValue.substring(0, maxChars);
+                    if (maxDigits > 0 && newLength > maxDigits) {
+                        newValue = newValue.substring(0, maxDigits);
                     }
                     change.setText(newValue);
                     change.setRange(0, change.getControlText().length());
@@ -133,18 +133,18 @@ public class IntegerTextField extends TextField {
     }
     
     /**
-     * Sets the maximum number of characters (excluding hyphen) allowed as input.
-     * @param maxChars int: the maximum number of characters (excluding hyphen) allowed as input
+     * Sets the maximum number of digits allowed as input. For inifinite allowed digits, set this to a negative value 
+     * @param maxDigits int: the maximum number of digits allowed as input
      */
-    public void setMaxChars(int maxChars) {
-        this.maxChars = maxChars;
+    public void setMaxDigits(int maxDigits) {
+        this.maxDigits = maxDigits;
     }
     
     /**
-     * Returns the maximum number of characters (excluding hyphen) allowed as input.
-     * @return int: the maximum number of characters (excluding hyphen) allowed as input
+     * Returns the maximum number of digits allowed as input. A negative value signifies infinite digits are allowed.
+     * @return int: the maximum number of digits allowed as input
      */
-    public int getMaxChars() {
-        return this.maxChars;
+    public int getMaxDigits() {
+        return this.maxDigits;
     }
 }
