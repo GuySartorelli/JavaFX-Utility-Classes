@@ -98,6 +98,17 @@ public class IntegerTextField extends TextField {
     }
     
     /**
+     * Sets the value of the property text.
+     * @param input long: Integer representation of initial text content
+     * @throws IllegalArgumentException if the textfield does not allow negative values, and the input is a negative integer.
+     * @see TextField.setText(String)
+     */
+    public void setText(long input) throws IllegalArgumentException {
+        if (!this.allowsNegativeValues && input < 0) throw new IllegalArgumentException("The IntegerTextField does not allow negative values");
+        setText(String.valueOf(input));
+    }
+    
+    /**
      * Gets the value of the property text as an int.
      * @return int: the value of the property text as an int
      * @throws NumberFormatException if the value is greater than Integer.MAX_VALUE or less than Integer.MIN_VALUE
