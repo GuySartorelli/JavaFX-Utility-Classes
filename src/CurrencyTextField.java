@@ -183,10 +183,11 @@ public class CurrencyTextField extends TextField {
             }
             currencyRegex += "]";
         } else {
-            currencyRegex = currencySymbol.getSymbol();
+            currencyRegex = "\\" + currencySymbol.getSymbol();
             currencySymbols = currencySymbol.getSymbol();
         }
-        if (currencySymbol != CurrencySymbol.NONE && currencySymbol.isNoneType()) currencyRegex += "?";
+//        if (currencySymbol != CurrencySymbol.NONE && currencySymbol.isNoneType()) currencyRegex += "?";
+        if (currencySymbol != CurrencySymbol.NONE) currencyRegex += "?";
         
         currencyRegex += "\\d+(\\"+currencySymbol.getDelimiter()+"\\d{0,2})?";
         String nonCurrencyRegex = String.format("[^.,\\d%s]+", currencySymbols); //remove completely invalid symbols
@@ -219,7 +220,7 @@ public class CurrencyTextField extends TextField {
         String delimiter = currencySymbol.getDelimiter();
         
         //add currency symbol and 0 before decimal
-        if (currencySymbol != CurrencySymbol.NONE && startsWithSymbol(input)){
+        if (currencySymbol != CurrencySymbol.NONE && startsWithSymbol(input, currencySymbol)){
             if (input.charAt(1) == delimiter.charAt(0)) {
                 input = currencySymbol.getSymbol() + "0" + input.substring(1);
             }
@@ -270,10 +271,27 @@ public class CurrencyTextField extends TextField {
     
     /**
      * Sets the currency symbol for this textfield.
-     * @param symbol CurrencySymbol: the currency symbol for this textfield.
+     * @param symbol CurrencySymbol: the currency symbol for this textfield
      */
     public void setCurrencySymbol(CurrencySymbol symbol) {
+        CurrencySymbol oldSymbol = this.currencySymbol;
         this.currencySymbol = symbol;
+        setText(replaceOldSymbol(getText(), oldSymbol, currencySymbol));
+    }
+    
+    /**
+     * Replaces an old currency symbol with the current one.
+     * If the input does not start with the oldSymbol, it is returned unaltered.
+     * @param input String: the input whose symbol is to be replaced
+     * @param oldSymbol CurrencySymbol: the symbol to be replaced
+     * @param newSymbol CurrencySymbol: the symbol with which to replace it
+     */
+    public static String replaceOldSymbol(String input, CurrencySymbol oldSymbol, CurrencySymbol newSymbol) {
+        if (startsWithSymbol(input, oldSymbol)) {
+            String newText = input.replace(String.valueOf(input.charAt(0)), newSymbol.getSymbol());
+            return newText;
+        }
+        return input;
     }
     
     /**
@@ -311,18 +329,20 @@ public class CurrencyTextField extends TextField {
     }
     
     /**
-     * Returns true if the input starts with the currency symbol chosen for this text field.<br>
+     * Returns true if the input starts with the currency symbol.<br>
      * If currency symbol is ANY or ANY_OR_NONE returns true if the input starts with any symbol in CurrencySymbol.getSymbols().<br>
      * If currency symbol is NONE, returns false.
+     * @param input String: the input to check
+     * @param symbol CurrencySymbol: the currency symbol to check for
      * @return true if input starts with appropriate currency symbol (always false if symbol type is NONE)
      */
-    private boolean startsWithSymbol(String input) {
+    public static boolean startsWithSymbol(String input, CurrencySymbol symbol) {
         if (input.length() == 0) return false;
-        if (currencySymbol == CurrencySymbol.NONE) return false;
-        if (currencySymbol == CurrencySymbol.ANY || currencySymbol == CurrencySymbol.ANY_OR_NONE) {
+        if (symbol == CurrencySymbol.NONE) return false;
+        if (symbol == CurrencySymbol.ANY || symbol == CurrencySymbol.ANY_OR_NONE) {
             return CurrencySymbol.getSymbols().contains(String.valueOf(input.charAt(0)));
         }
-        return input.startsWith(currencySymbol.getSymbol());
+        return input.startsWith(symbol.getSymbol());
     }
 }
 
