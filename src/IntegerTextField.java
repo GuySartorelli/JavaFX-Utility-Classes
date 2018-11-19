@@ -38,7 +38,7 @@ public class IntegerTextField extends TextField {
 
             @Override
             public Change apply(Change change) {
-//                change.
+//                change
                 if (change.isContentChange()) {
                     String newValue = change.getControlNewText();
                     int newLength = newValue.length();
@@ -65,6 +65,24 @@ public class IntegerTextField extends TextField {
      * @param input int: Integer representation of initial text content
      */
     public IntegerTextField(int input) {
+        this();
+        setText(input);
+    }
+    
+    /**
+     * Creates a TextField with initial text content.
+     * @param input long: Long representation of initial text content
+     */
+    public IntegerTextField(long input) {
+        this();
+        setText(input);
+    }
+    
+    /**
+     * Creates a TextField with initial text content.
+     * @param input BigInteger: BigInteger representation of initial text content
+     */
+    public IntegerTextField(BigInteger input) {
         this();
         setText(input);
     }
@@ -166,6 +184,8 @@ public class IntegerTextField extends TextField {
      * @throws ArithmeticException when the result is out of the range support by BigInteger of -2^Integer.MAX_VALUE (exclusive) to +2^Integer.MAX_VALUE (exclusive)
      */
     public BigInteger getBigInteger() throws ArithmeticException {
+        String value = this.getText();
+        if (value.length() == 0 || value.equals("-")) return new BigInteger("0");
         return new BigInteger(getText());
     }
     
