@@ -162,7 +162,7 @@ public class CurrencyTextField extends TextField {
      * @param symbol CurrencySymbol: the currency symbol used by this text field
      * @param text String: default text to display in the text field (must be currency format)
      */
-    public CurrencyTextField(CurrencySymbol symbol, String text) {
+    public CurrencyTextField(String text, CurrencySymbol symbol) {
         this(symbol);
         if (!CURRENCY_PATTERN.matcher(text).matches()) throw new IllegalArgumentException("Text must be in valid currency format");
         setText(text);
