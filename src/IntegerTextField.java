@@ -3,6 +3,7 @@
 //and then altered to fit my desires
 
 import java.util.regex.Pattern;
+import java.math.BigInteger;
 import java.util.function.UnaryOperator;
 
 import javafx.scene.control.TextField;
@@ -13,6 +14,8 @@ import javafx.scene.control.TextFormatter.Change;
  * Text field that only accepts integer values as input.
  * Any text pasted into this text field will be stripped of any non-integer characters so that only the integers remain.
  * Input may be optionally restricted to a maximum number of digits and to allow or disallow negative values.
+ * <p><b>NOTE</b> calling the setTextFormatter() method on an IntegerTextField will break it, as this implementation uses that method to set up its restrictions.
+ * Unfortunately that method is set as final in javafx.scene.control.TextInputControl (from which this class inherits it) so I cannot override it to restrict its usage.</p>
  * @see javafx.scene.control.TextField
  * @author Guy Sartorelli
  *
@@ -22,6 +25,8 @@ public class IntegerTextField extends TextField {
     private Pattern nonIntegerPattern;
     private boolean allowsNegativeValues = true;
     private int maxDigits = -1;
+    String minValue = null;
+    String maxValue = null;
     
     /**
      * Creates a TextField with empty text content.
@@ -33,6 +38,7 @@ public class IntegerTextField extends TextField {
 
             @Override
             public Change apply(Change change) {
+//                change.
                 if (change.isContentChange()) {
                     String newValue = change.getControlNewText();
                     int newLength = newValue.length();
@@ -89,23 +95,35 @@ public class IntegerTextField extends TextField {
     /**
      * Sets the value of the property text.
      * @param input int: Integer representation of initial text content
-     * @throws IllegalArgumentException if the textfield does not allow negative values, and the input is a negative integer.
-     * @see TextField.setText(String)
+     * @throws IllegalArgumentException if the textfield does not allow negative values, and the input is a negative value
+     * @see javafx.scene.control.TextInputControl#setText
      */
     public void setText(int input) throws IllegalArgumentException {
-        if (!this.allowsNegativeValues && input < 0) throw new IllegalArgumentException("The IntegerTextField does not allow negative values");
+        if (!this.allowsNegativeValues && input < 0) throw new IllegalArgumentException("This IntegerTextField does not allow negative values");
         setText(String.valueOf(input));
     }
     
     /**
      * Sets the value of the property text.
-     * @param input long: Integer representation of initial text content
-     * @throws IllegalArgumentException if the textfield does not allow negative values, and the input is a negative integer.
-     * @see TextField.setText(String)
+     * @param input long: Long representation of initial text content
+     * @throws IllegalArgumentException if the textfield does not allow negative values, and the input is a negative value
+     * @see javafx.scene.control.TextInputControl#setText
      */
     public void setText(long input) throws IllegalArgumentException {
-        if (!this.allowsNegativeValues && input < 0) throw new IllegalArgumentException("The IntegerTextField does not allow negative values");
+        if (!this.allowsNegativeValues && input < 0) throw new IllegalArgumentException("This IntegerTextField does not allow negative values");
         setText(String.valueOf(input));
+    }
+    
+    /**
+     * Sets the value of the property text.
+     * @param input BigInteger: BigInteger representation of initial text content
+     * @throws IllegalArgumentException if the textfield does not allow negative values, and the input is a negative value
+     * @see javafx.scene.control.TextInputControl#setText
+     */
+    public void setText(BigInteger input) throws IllegalArgumentException {
+        String inputString = input.toString();
+        if (!this.allowsNegativeValues && inputString.startsWith("-")) throw new IllegalArgumentException("This IntegerTextField does not allow negative values");
+        setText(inputString);
     }
     
     /**
@@ -143,6 +161,15 @@ public class IntegerTextField extends TextField {
     }
     
     /**
+     * Gets the value of the property text as a BigInteger.
+     * @return BigInteger: the value of the property text as a BigInteger
+     * @throws ArithmeticException when the result is out of the range support by BigInteger of -2^Integer.MAX_VALUE (exclusive) to +2^Integer.MAX_VALUE (exclusive)
+     */
+    public BigInteger getBigInteger() throws ArithmeticException {
+        return new BigInteger(getText());
+    }
+    
+    /**
      * Returns true if the value of the property text starts with "-".
      * @return boolean: true if the value of the property text starts with "-"
      */
@@ -151,8 +178,10 @@ public class IntegerTextField extends TextField {
     }
     
     /**
-     * Sets this field to allow or disallow negative values as input. 
-     * @param allow
+     * Sets this field to allow or disallow negative values as input.<br>
+     * If the textfield has a negative value when this method is called and set to false, the hyphen
+     * will be removed, resulting in a positive value (e.g. "-500" would become "500").
+     * @param allow boolean: allow or disallow negative values as input
      */
     public void setAllowNegativeValues(boolean allow) {
         boolean previouslyAllowedNegativeValues = this.allowsNegativeValues; 
@@ -186,5 +215,37 @@ public class IntegerTextField extends TextField {
      */
     public int getMaxDigits() {
         return this.maxDigits;
+    }
+    
+    public void clearMinValueRestriction() {
+        this.minValue = null;
+    }
+    
+    public void setMinValueRestriction(int value) {
+        this.minValue = String.valueOf(value);
+    }
+    
+    public void setMinValueRestriction(long value) {
+        this.minValue = String.valueOf(value);
+    }
+
+    public void setMinValueRestriction(BigInteger value) {
+        this.minValue = value.toString();
+    }
+
+    public void clearMaxValueRestriction() {
+        this.maxValue = null;
+    }
+    
+    public void setMaxValueRestriction(int value) {
+        this.maxValue = String.valueOf(value);
+    }
+    
+    public void setMaxValueRestriction(long value) {
+        this.maxValue = String.valueOf(value);
+    }
+
+    public void setMaxValueRestriction(BigInteger value) {
+        this.maxValue = value.toString();
     }
 }
