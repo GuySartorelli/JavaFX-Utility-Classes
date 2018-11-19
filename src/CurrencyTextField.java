@@ -13,7 +13,7 @@ import javafx.scene.control.TextFormatter.Change;
 /**
  * TextField that only accepts currency values as input.
  * Any text pasted into this text field will be stripped of any non-currency characters so that only the valid characters remain.
- * <p>Valid characters include the symbol corresponding to the chosen enum value from CurrencyTextField.CurrencySymbol followed by a single digit, then a period, then two more digits.</p>
+ * <p>Valid characters include the symbol corresponding to the chosen enum value from CurrencyTextField.CurrencySymbol followed by one or more digits, then a period, then two more digits.</p>
  * <p>CurrencySymbol values with the appendix <b>_OR_NONE</b> are allowed to either have their corresponding symbol at the front of the text value or
  * have no symbol at all. If a CurrencySymbol without that appendix is used, the corresponding symbol must always be at the front of the text value
  * unless there is no text present.
@@ -76,6 +76,7 @@ public class CurrencyTextField extends TextField {
             return symbols;
         }
         
+        /**Returns true if the CurrencySymbol is NONE or has suffix OR_NONE.*/
         public boolean isNoneType() {
             return isNoneType;
         }
@@ -86,8 +87,9 @@ public class CurrencyTextField extends TextField {
     private Pattern NON_CURRENCY_PATTERN;
     private int maxDollarDigits = -1;
     
-    //TODO add missing maxDollarDigits implementation
-    //TODO consider a maxDecimalPlaces for use in accountancy nonsense
+    //TODO implement maxDollarDigits restriction
+    //TODO consider a maxDecimalPlaces for use in applications where a higher degree of accuracy is required
+    //TODO consider optionally not allowing empty value
     
     /**
      * Default constructor: currency symbol set to CurrencySymbol.ANY_OR_NONE and no default text.
@@ -102,7 +104,7 @@ public class CurrencyTextField extends TextField {
      */
     public CurrencyTextField(String text) {
         this(CurrencySymbol.ANY_OR_NONE);
-        if (!CURRENCY_PATTERN.matcher(text).matches()) throw new IllegalArgumentException("Text must be in valid currency format");
+        if (!text.equals("") && !CURRENCY_PATTERN.matcher(text).matches()) throw new IllegalArgumentException("Text must be in valid currency format");
         setText(text);
     }
     
@@ -164,7 +166,7 @@ public class CurrencyTextField extends TextField {
      */
     public CurrencyTextField(String text, CurrencySymbol symbol) {
         this(symbol);
-        if (!CURRENCY_PATTERN.matcher(text).matches()) throw new IllegalArgumentException("Text must be in valid currency format");
+        if (!text.equals("") && !CURRENCY_PATTERN.matcher(text).matches()) throw new IllegalArgumentException("Text must be in valid currency format");
         setText(text);
     }
     
@@ -186,8 +188,8 @@ public class CurrencyTextField extends TextField {
             currencyRegex = "\\" + currencySymbol.getSymbol();
             currencySymbols = currencySymbol.getSymbol();
         }
-//        if (currencySymbol != CurrencySymbol.NONE && currencySymbol.isNoneType()) currencyRegex += "?";
-        if (currencySymbol != CurrencySymbol.NONE) currencyRegex += "?";
+        if (currencySymbol != CurrencySymbol.NONE && currencySymbol.isNoneType()) currencyRegex += "?";
+//        if (currencySymbol != CurrencySymbol.NONE) currencyRegex += "?";
         
         currencyRegex += "\\d+(\\"+currencySymbol.getDelimiter()+"\\d{0,2})?";
         String nonCurrencyRegex = String.format("[^.,\\d%s]+", currencySymbols); //remove completely invalid symbols
