@@ -19,14 +19,16 @@ import javafx.scene.control.TextFormatter.Change;
  * unless there is no text present.
  * The CurrencySymbol value <b>NONE</b> must not have any currency symbol. The CurrencySymbols <b>ANY</b> and <b>ANY_OR_NONE</b> can have any symbol that corresponds
  * with any valid CurrencySymbol value.</p>
+ * <p><b>NOTE</b> calling the setTextFormatter() method on a CurrencyTextField will break it, as this implementation uses that method to set up its restrictions.
+ * Unfortunately that method is set as final in javafx.scene.control.TextInputControl (from which this class inherits it) so I cannot override it to restrict its usage.</p>
  * @see javafx.scene.control.TextField
- * @author Bespoke Burgers
+ * @author Guy Sartorelli
  *
  */
 public class CurrencyTextField extends TextField {
     /**Enum representation of valid currency symbols used by the CurrencyTextField class
      * @see CurrencyTextField
-     * @author Bespoke Burgers
+     * @author Guy Sartorelli
      */
     public enum CurrencySymbol{
         NONE("", ".", true),
@@ -82,9 +84,9 @@ public class CurrencyTextField extends TextField {
     private CurrencySymbol currencySymbol;
     private Pattern CURRENCY_PATTERN;
     private Pattern NON_CURRENCY_PATTERN;
-    private int maxDollarChars = -1;
+    private int maxDollarDigits = -1;
     
-    //TODO add missing maxDollarChars implementation
+    //TODO add missing maxDollarDigits implementation
     //TODO consider a maxDecimalPlaces for use in accountancy nonsense
     
     /**
@@ -260,7 +262,7 @@ public class CurrencyTextField extends TextField {
      */
     public void setMaxDollarChars(int chars) {
         if (chars < -1) throw new IllegalArgumentException("Values below -1 are invalid.");
-        maxDollarChars = chars;
+        maxDollarDigits = chars;
     }
     
     /**
@@ -269,7 +271,7 @@ public class CurrencyTextField extends TextField {
      * @return int: the maximum number of digits allowed before the decimal place
      */
     public int getMaxDollarChars() {
-        return maxDollarChars;
+        return maxDollarDigits;
     }
     
     /**
