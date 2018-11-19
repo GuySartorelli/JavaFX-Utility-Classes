@@ -113,13 +113,17 @@ public class CurrencyTextField extends TextField {
     public CurrencyTextField(CurrencySymbol symbol) {
         super();
         this.currencySymbol = symbol;
-        setupRegex();
-        setTextFormatter(new TextFormatter<String>(new UnaryOperator<TextFormatter.Change>() {
+        this.setupRegex();
+        super.setTextFormatter(new TextFormatter<String>(new UnaryOperator<TextFormatter.Change>() {
 
             //formatting on text being altered
             @Override
             public Change apply(Change change) {
                 if (change.isContentChange()) {
+                    boolean isTypedChange = true;
+                    int lengthDifference = change.getControlNewText().length() - change.getControlText().length();
+                    if (lengthDifference < -1 || lengthDifference > 1) isTypedChange = false;
+                    
                     String newValue = change.getControlNewText();
                     if (currencySymbol.getDelimiter().equals(",")) newValue = newValue.replaceAll(".", ",");
                     else newValue = newValue.replaceAll(",", ".");
@@ -132,7 +136,7 @@ public class CurrencyTextField extends TextField {
 //                    if (maxChars > 0 && newLength > maxChars) {
 //                        newValue = newValue.substring(0, maxChars);
 //                    }
-                    change.setText(newValue);
+                    change.setText(isTypedChange ? newValue : postChangeFormat(newValue));
                     change.setRange(0, change.getControlText().length());
                 }
                 return change;
@@ -185,49 +189,58 @@ public class CurrencyTextField extends TextField {
         if (currencySymbol != CurrencySymbol.NONE && currencySymbol.isNoneType()) currencyRegex += "?";
         
         currencyRegex += "\\d+(\\"+currencySymbol.getDelimiter()+"\\d{0,2})?";
-        String nonCurrencyRegex = String.format("[^.,\\d%s]+", currencySymbols);
-        if (currencySymbol != CurrencySymbol.NONE) nonCurrencyRegex += String.format("|(?<=.)[%s]+", currencySymbols);
-        nonCurrencyRegex += "|(?<=[,.].{0,20})[.,]+|(?<=[,.]\\d{2}.{0,20})\\d+";
+        String nonCurrencyRegex = String.format("[^.,\\d%s]+", currencySymbols); //remove completely invalid symbols
+        if (currencySymbol != CurrencySymbol.NONE) nonCurrencyRegex += String.format("|(?<=.)[%s]+", currencySymbols); //remove currency symbol that isn't at the start of the string
+        nonCurrencyRegex += "|(?<=[,.].{0,1024})[.,]+" //remove delimiter that isn't the first delimiter 
+                          + "|(?<=[,.]\\d{2}.{0,1024})\\d+"; //remove digits after the decimal delimiter exceeding 2 digits
         CURRENCY_PATTERN = Pattern.compile(currencyRegex);
         NON_CURRENCY_PATTERN = Pattern.compile(nonCurrencyRegex, Pattern.DOTALL);
     }
     
     /**
-     * Helper method to format the text as a currency when the field loses focus.<br>
+     * Helper method to format the text as a currency when the field loses focus.
+     */
+    private void onLoseFocus() {
+        String formattedText = postChangeFormat(getText());
+        setText(formattedText);
+    }
+    
+    /**
+     * Formats text as a valid currency and returns the result.<br>
      * Adds a currency symbol if required by omitted.<br>
      * Adds a 0 before the decimal if omitted.<br>
      * Adds one or two 0s after the decimal place if less than two 0s are present.<br>
      * e.g. ".4" will be formatted to "$0.40" if currency symbol is set to DOLLARS and to "0.40" if set to DOLLARS_OR_NONE.
+     * @param input String: the input to be formatted
+     * @return String: text in a valid currency format
      */
-    private void onLoseFocus() {
-        String currentText = getText();
-        if (currentText.length() == 0) return;
+    private String postChangeFormat(String input) {
+        if (input.length() == 0) return input;
         String delimiter = currencySymbol.getDelimiter();
         
         //add currency symbol and 0 before decimal
-        if (currencySymbol != CurrencySymbol.NONE && startsWithSymbol()){
-            if (currentText.charAt(1) == delimiter.charAt(0)) {
-                currentText = currencySymbol.getSymbol() + "0" + currentText.substring(1);
+        if (currencySymbol != CurrencySymbol.NONE && startsWithSymbol(input)){
+            if (input.charAt(1) == delimiter.charAt(0)) {
+                input = currencySymbol.getSymbol() + "0" + input.substring(1);
             }
         } else {
-            if (currentText.startsWith(delimiter)) {
-                currentText = "0" + currentText;
+            if (input.startsWith(delimiter)) {
+                input = "0" + input;
             }
             if (!currencySymbol.isNoneType()) {
-                currentText = currencySymbol.getSymbol() + currentText;
+                input = currencySymbol.getSymbol() + input;
             }
         }
         
         //add delimiter and cents if necessary
-        if (!currentText.contains(delimiter)) currentText += delimiter + "00";
+        if (!input.contains(delimiter)) input += delimiter + "00";
         else {
-            System.out.println(currentText);
-            int digitsAfterDecimal = currentText.substring(currentText.indexOf(delimiter)+1).length();
-            if (digitsAfterDecimal == 1) currentText += "0";
-            if (digitsAfterDecimal == 0) currentText += "00";
+            int digitsAfterDecimal = input.substring(input.indexOf(delimiter)+1).length();
+            if (digitsAfterDecimal == 1) input += "0";
+            if (digitsAfterDecimal == 0) input += "00";
         }
         
-        setText(currentText);
+        return input;
     }
     
     /**
@@ -249,10 +262,18 @@ public class CurrencyTextField extends TextField {
     
     /**
      * Sets the value of the property text.
-     * @param text double: the value of the property text
+     * @param input double: the value of the property text
      */
-    public void setText(double text) {
-        setText(String.valueOf(text));
+    public void setText(double input) {
+        setText(String.valueOf(input));
+    }
+    
+    /**
+     * Sets the currency symbol for this textfield.
+     * @param symbol CurrencySymbol: the currency symbol for this textfield.
+     */
+    public void setCurrencySymbol(CurrencySymbol symbol) {
+        this.currencySymbol = symbol;
     }
     
     /**
@@ -276,23 +297,39 @@ public class CurrencyTextField extends TextField {
     
     /**
      * Returns true if the text starts with the currency symbol chosen for this text field.<br>
-     * IF currency symbol is ANY or ANY_OR_NONE returns true if the text starts with any symbol in CurrencySymbol.getSymbols().<br>
+     * If currency symbol is ANY or ANY_OR_NONE returns true if the text starts with any symbol in CurrencySymbol.getSymbols().<br>
      * If currency symbol is NONE, returns false.
      * @return true if text starts with appropriate currency symbol (always false if symbol type is NONE)
      */
     public boolean startsWithSymbol() {
+        if (this.getLength() == 0) return false;
         if (currencySymbol == CurrencySymbol.NONE) return false;
         if (currencySymbol == CurrencySymbol.ANY || currencySymbol == CurrencySymbol.ANY_OR_NONE) {
             return CurrencySymbol.getSymbols().contains(String.valueOf(getText().charAt(0)));
         }
         return getText().startsWith(currencySymbol.getSymbol());
     }
+    
+    /**
+     * Returns true if the input starts with the currency symbol chosen for this text field.<br>
+     * If currency symbol is ANY or ANY_OR_NONE returns true if the input starts with any symbol in CurrencySymbol.getSymbols().<br>
+     * If currency symbol is NONE, returns false.
+     * @return true if input starts with appropriate currency symbol (always false if symbol type is NONE)
+     */
+    private boolean startsWithSymbol(String input) {
+        if (input.length() == 0) return false;
+        if (currencySymbol == CurrencySymbol.NONE) return false;
+        if (currencySymbol == CurrencySymbol.ANY || currencySymbol == CurrencySymbol.ANY_OR_NONE) {
+            return CurrencySymbol.getSymbols().contains(String.valueOf(input.charAt(0)));
+        }
+        return input.startsWith(currencySymbol.getSymbol());
+    }
 }
 
 /*
 REGEX in setupRegex is pretty nuts, so it is explained here.
 Note that where in the look-behind I have had to replace the potentially infinite symbols with specific ranges
-because Java does not support infinite look-behinds. I have arbitrarily chosen a range of 0-20 which should be more than sufficient
+because Java does not support infinite look-behinds. I have arbitrarily chosen a range of 0-1024 which should be more than sufficient
 for any copy-pasted values that would be remotely considered reasonable
 To check if text IS ALREADY a currency, I use the following:
 [$€]?\d+([,.]\d{0,2})?
