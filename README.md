@@ -7,10 +7,14 @@ A TextField that only accepts integer values as input.
 Any text pasted into this text field will be stripped of any non-integer characters so that only the integers remain.  
 Input may be optionally restricted to a maximum number of digits and to allow or disallow negative values.
 
+There are plans to include options to limit values to a specific range (e.g. if users only want values with the ranges of int, they could call `setMinValueRestriction(Integer.MIN_VALUE)` and `setMaxValueRestriction(Integer.MAX_VALUE)`. While those methods do currently exist, they currently affect no change. 
+
 ### CurrencyTextField:
 A TextField that only accepts currency values as input.  
 Any text pasted into this text field will be stripped of any non-currency characters so that only the valid characters remain.  
-Valid characters include the symbol corresponding to the chosen enum value from CurrencyTextField.CurrencySymbol followed by a single digit, then a period, then two more digits.
+Valid characters include the symbol corresponding to the chosen enum value from CurrencyTextField.CurrencySymbol followed by one or more digits, then a period, then two more digits.
 
 CurrencySymbol values with the appendix `_OR_NONE` are allowed to either have their corresponding symbol at the front of the text value or have no symbol at all. If a CurrencySymbol without that appendix is used, the corresponding symbol must always be at the front of the text value unless there is no text present.  
 The CurrencySymbol value `NONE` must not have any currency symbol. The CurrencySymbols `ANY` and `ANY_OR_NONE` can have any symbol that corresponds with any valid CurrencySymbol value.
+
+There are plans to include options to set the maximum number of digits before and after the decimal delimiter (similar to IntegerTextField's `setMaxDigits(int)` method).
